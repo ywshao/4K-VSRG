@@ -1,5 +1,5 @@
-# 4K-VSRG-Trainer
-This is the final project for the MIR course.
+# 4K-VSRG
+This is a personal project based on the final project for the MIR course.
 
 ## How to Play the Game
 ### Set Audio Device **\*Important\***
@@ -19,7 +19,7 @@ Use esc to go back to the previous menu.\
 ### Menu
 Train: play a bms.\
 Dan: play dan course.\
-Exit: exit to game.
+Exit: exit the game.
 
 #### Dan
 The list of dan courses.
@@ -27,16 +27,6 @@ The list of dan courses.
 #### Train
 1. The list of BMS directories.
 2. The list of BMS files in the selected directory.
-
-#### Pattern Parameters
-Rate: the rate modifier of the BMS.\
-Jack: the jackness of the chart.\
-Jack Length: the jack lengthness of the chart.\
-Speed Tech: the hardness of the arrangement of streams.\
-Jump: the density of jumps.\
-Hand: the density of hands.\
-Quad: the density of quads.\
-Chord Tech: the jackness of the chart when notes per second is low and has jumps, hands, or quads.
 
 ### Gameplay
 The top-left bar is the HP bar.\
@@ -92,8 +82,7 @@ Stop sequences are not processed.\
 BPM changes that are not at the beginning of the bar are not processed.
 
 ## References
-The notes of default_bar are modified from [R Skin v3.0 (Bars)](https://dl.orangedox.com/oKLlx4/13?dl=1).\
-The development log can be found [here](https://hackmd.io/AHmZyMbJQXWOBXwvI58NhQ?view). (Traditional Chinese)
+The notes of default_bar are modified from [R Skin v3.0 (Bars)](https://dl.orangedox.com/oKLlx4/13?dl=1).
 
 ## Used Libraries
 SDL2\
