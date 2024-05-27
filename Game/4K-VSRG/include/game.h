@@ -82,12 +82,12 @@ private:
 	int bmsSelect = 0;
 	int bmsFileSelect = 0;
 	int difficultySelect = 0;
-	PatternParameter patternParameter;
+	int rate;
 
 	double scrollSpeed;
 
 	std::filesystem::path bmsPath;
-	void patternParameterWrite(std::string iniPath);
+	void rateWrite(std::string iniPath);
 	void bmsInit(bool dan);
 	
 public:

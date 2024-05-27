@@ -1,5 +1,5 @@
 # 4K-VSRG
-This is a personal project based on the final project for the MIR course.
+This is a personal project based on the final project of the MIR course.
 
 ## How to Play the Game
 ### Set Audio Device **\*Important\***
@@ -66,23 +66,24 @@ For the number after "judgeNote", "judgeKey", and "errorMeter":
 6. Miss
 7. Early miss (early poor)
 
-### Create Your Own Dan Course
+### Create Your Own Dan Course (currently not available)
 Please refer to files in sound_test/dan.\
 Change "dirPath" with the BMS directory.\
 Change "filePath" with the BMS files.\
 You can also refer to the .ini it generates in the BMS directories.
 
-## Bugs and not Implemented Functions
+## Bugs and non-Implemented Functions
 In some situations, a memory leak may occur.\
-The end of the music may be clipped.\
-If the sound is too loud, the sound may be distorted.
+If the concurrent sounds are too much, the sound may be distorted.
 
-Only supports 7+1k BMS files.\
+Only supports 4k BMS files.\
 Stop sequences are not processed.\
 BPM changes that are not at the beginning of the bar are not processed.
 
 ## References
-The notes of default_bar are modified from [R Skin v3.0 (Bars)](https://dl.orangedox.com/oKLlx4/13?dl=1).
+The notes of default_bar are modified from [R Skin v3.0 (Bars)](https://dl.orangedox.com/oKLlx4/13?dl=1).\
+The old development log can be found [here](https://hackmd.io/AHmZyMbJQXWOBXwvI58NhQ?view). (Traditional Chinese)
+The new development log can be found [here](https://hackmd.io/VCyC5KNrQaiqNbN51md7rg?view). (Traditional Chinese)
 
 ## Used Libraries
 SDL2\

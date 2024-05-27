@@ -3,7 +3,7 @@
 #define bufferSize 1000
 #define maxIndex 1536
 #define maxBarNum 1000
-#define maxKeyNum 8
+#define maxKeyNum 4
 
 #include <cstdlib>
 #include <fstream>
@@ -21,15 +21,8 @@ enum wavType{
 union PatternParameter {
 	struct {
 		int rate;
-		int jack;
-		int jackLength;
-		int speedTech;
-		int jump;
-		int hand;
-		int quad;
-		int tech;
 	};
-	int access[8];
+	int access[1];
 };
 
 class BmsParser {
@@ -45,7 +38,6 @@ private:
 	std::vector<int> messageToLongNotes(std::string message, int key);
 	std::vector<int> messageToBpms(std::string message);
 	std::vector<int> notesMerge(std::vector<int> notes1, std::vector<int> notes2);
-	std::vector<int> notesRanking(int bar, int idx, int noteDist[maxKeyNum]);
 public:
 	int player;
 	float bpm;
@@ -59,6 +51,5 @@ public:
 	int wavInBgm[maxIndex] = {};
 	int wavInNote[maxIndex] = {};
 	void parseFile(const char* file);
-	void bms7to4(PatternParameter patternParameter);
 	void clear();
 };

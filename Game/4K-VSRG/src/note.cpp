@@ -51,6 +51,7 @@ int KeyLogger<KeySound>::count() {
 	}
 	return size;
 }
+
 int KeyLogger<JudgeKeySound>::count() {
 	int size = 0;
 	for (int key = 0; key < keyNum; key++) {
@@ -151,13 +152,12 @@ void ChartVisible::update(Audio* audio, Chart* chart, Uint64 chartOffset, bool c
 			}
 		}
 	}
-	while (!bgm.empty()) {
-		if (bgm.top().time + chartOffset <= SDL_GetTicks64()) {
-			audio->playSound(changeRate, bgm.top().sound);
-			bgm.pop();
-		}
-		else {
-			break;
-		}
+	while (!bgm.empty() && bgm.top().time + chartOffset <= SDL_GetTicks64()) {
+		audio->playSound(changeRate, bgm.top().sound);
+		bgm.pop();
 	}
+}
+
+bool ChartVisible::finished() {
+	return bgm.empty();
 }

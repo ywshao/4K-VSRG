@@ -77,6 +77,7 @@ private:
 public:
 	void init(Chart* chart);
 	void update(Audio* audio, Chart* chart, Uint64 chartOffset, bool changeRate);
+	bool finished();
 };
 
 class NoteLogger : public KeyLogger<Uint64> {

@@ -1,6 +1,9 @@
 #include <cstdio>
 #include <iterator>
 #include <cstring>
+
+#include <cmath>
+
 #include "audioTest.h"
 
 int Audio::callback(const void* inputBuffer,
@@ -16,20 +19,41 @@ int Audio::callback(const void* inputBuffer,
 	if (playingSounds->empty()) {
 		return 0;
 	}
-	for (std::list<PlayingSound>::iterator it = playingSounds->begin(); it != playingSounds->end(); it++) {
+	// TODO: Calculate the output sound when adding the sound instead of calculating it in callback
+	// TODO: New method: O(framesPerBuffer * bufferPerSecond) = O(44100)
+	// TODO: Callback method (current): O(playingSouns * framesPerBuffer * bufferPerSecond) = O(playingSouns * 44100)
+	for (std::list<PlayingSound>::iterator it = playingSounds->begin(); it != playingSounds->end();) {
+		bool flag = true;
 		float* output = (float*)outputBuffer;
 		for (int times = 0; times < framesPerBuffer; times++) {
 			*output++ += it->sound->left[it->playing_pos] * soundVolume;
 			*output++ += it->sound->right[it->playing_pos] * soundVolume;
 			if (++(it->playing_pos) >= it->sound->left.size()) {
-				std::list<PlayingSound>::iterator eraseIt = it++;
-				playingSounds->erase(eraseIt);
-				if (it == playingSounds->end()) {
-					return 0;
-				}
+				it = playingSounds->erase(it);
+				flag = false;
 				break;
 			}
 		}
+		if (flag) {
+			++it;
+		}
+	}
+	float* output = (float*)outputBuffer;
+	for (int times = 0; times < framesPerBuffer; times++) {
+		if (*output >= 0) {
+			*output = -std::exp(-*output) + 1;
+		}
+		else {
+			*output = std::exp(*output) - 1;
+		}
+		++output;
+		if (*output >= 0) {
+			*output = -std::exp(-*output) + 1;
+		}
+		else {
+			*output = std::exp(*output) - 1;
+		}
+		++output;
 	}
 	return 0;
 }
@@ -63,6 +87,9 @@ void Audio::portAudioExit() {
 }
 
 void Audio::playSound(bool changeRate, int index) {
+	/*if (playingSounds.size() >= 128) {
+		return;
+	}*/
 	if (changeRate) {
 		playingSounds.push_back(PlayingSound(&newSound[index]));
 	}

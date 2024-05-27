@@ -46,7 +46,7 @@ std::string Bms7To4::convertIntToHex(int wavNum) {
 	return returnNum;
 }
 
-void Bms7To4::convert(const char* file, const PatternParameter patternParameter) {
+void Bms7To4::convert(const char* file) {
 	std::ofstream fstream("output.bm4");
 	bmsParser.parseFile(file);
 	fstream << "#BPM" << ' ' << bmsParser.bpm << std::endl;
@@ -78,9 +78,6 @@ void Bms7To4::convert(const char* file, const PatternParameter patternParameter)
 			fstream << std::endl;
 		}
 	}
-	int prepreviousNote[8] = {};
-	int previousNote[8] = {};
-	int previousNoteCount = 0;
 	for (int bar = 0; bar <= bmsParser.barMax; bar++) {
 		std::vector<int> note4[8];
 		int sizeLCM = 1;
@@ -128,25 +125,6 @@ void Bms7To4::convert(const char* file, const PatternParameter patternParameter)
 					}
 					continue;
 				}
-				int newNoteNum = 0;
-				for (; newNoteNum < 4 - previousNoteCount && newNoteNum < currentNote8.size(); newNoteNum++) {
-					int key;
-					while (previousNote[key = rand() % 4] || currentNote[key]);
-					if (prepreviousNote[key]) {
-						while (previousNote[key = rand() % 4] || currentNote[key]);
-					}
-					currentNote[key] = currentNote8[newNoteNum];
-					currentNoteCount++;
-				}
-				for (int key = 4; newNoteNum < currentNote8.size(); newNoteNum++) {
-					currentNote[key++] = currentNote8[newNoteNum];
-				}
-				for (int key = 0; key < 8; key++) {
-					note4[key].push_back(currentNote[key]);
-					prepreviousNote[key] = previousNote[key];
-					previousNote[key] = currentNote[key];
-				}
-				previousNoteCount = currentNoteCount;
 			}
 			for (int key = 0; key < 4; key++) {
 				fstream << '#' << std::setfill('0') << std::setw(3) << bar << '1' << key + 1 << ':';

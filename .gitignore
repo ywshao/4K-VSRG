@@ -33,10 +33,11 @@
 
 # Visual Studio
 */*/.vs/
-Game/4K-VSRG-Trainer/x64/
+Game/4K-VSRG/x64/
 Game/Audio-Device-Detector/x64
 BMS/BMS-Parser/x64
 BMS/BMS7To4/x64
 BMS/BMS-Classify
 BMS/BMS-Extract
+Game/4K-VSRG/sound_test
 */*/*.bms

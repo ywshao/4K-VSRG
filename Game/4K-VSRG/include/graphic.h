@@ -10,7 +10,7 @@
 #include "score.h"
 #include "bms7to4.h"
 
-#define receipterY 600
+#define receipterY 800
 #define fontNum 3
 
 enum {
@@ -50,7 +50,7 @@ public:
 	void drawDan(std::vector<std::filesystem::path>& danDir, int danNum, int danSelect);
 	void drawBms(std::vector<std::filesystem::path>& bmsDir, int bmsSelect);
 	void drawBmsFile(std::vector<std::vector<std::filesystem::path>>& bmsFileDir, int bmsSelect, int bmsFileSelect);
-	void drawDifficultySelect(PatternParameter& patternParameter, int difficultySelect);
+	void drawDifficultySelect(int rate, int difficultySelect);
 	void drawHp(int hp);
 	void drawResult(Score& score);
 	void drawDanResult(Score& score, int danSeg);
