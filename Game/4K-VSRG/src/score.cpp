@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "score.h"
 
 void ErrorMeter::setLifeTime(int time) {
@@ -38,21 +40,20 @@ std::list<JudgeErrorTime>::iterator ErrorMeter::end() {
 	return errorList.end();
 }
 
-int Score::judgeScoreV1(double difficulty, Uint64 errorMs) {
-	double errorAbs = difficulty * errorMs;
-	if (errorAbs <= 22.5) {
+int Score::judgeScoreV1(double judgeDifficulty, Uint64 errorMs) {
+	if (errorMs <= 22.5 / judgeDifficulty) {
 		return 5;
 	}
-	else if (errorAbs <= 45) {
+	else if (errorMs <= 45 / judgeDifficulty) {
 		return 4;
 	}
-	else if (errorAbs <= 90) {
+	else if (errorMs <= 90 / judgeDifficulty) {
 		return 3;
 	}
-	else if (errorAbs <= 135) {
+	else if (errorMs <= 135 / judgeDifficulty) {
 		return 2;
 	}
-	else if (errorAbs <= 180) {
+	else if (errorMs <= 180) {
 		return 1;
 	}
 	else {
@@ -60,45 +61,47 @@ int Score::judgeScoreV1(double difficulty, Uint64 errorMs) {
 	}
 }
 
-double Score::judgeScoreV2(double difficulty, Uint64 errorMs) {
-	double errorAbs = difficulty * errorMs;
-	if (errorAbs <= 2) { // (0, 1)
+// Etterna Wife v3
+double Score::judgeScoreV2(double judgeDifficulty, Uint64 errorMs) {
+	const static double missPoints = -2.75;
+	const static double powerFactor = 0.75;
+	const double judgeWindowFactor = 1 / judgeDifficulty;
+	const double deviationFactor = 22.7 * std::pow(judgeWindowFactor, powerFactor);
+	// Two important MS constant
+	const double zeroPointMs = 65 * std::pow(judgeWindowFactor, powerFactor);
+	const double minPointMs = 180 * judgeWindowFactor;
+	if (errorMs <= 5 * judgeWindowFactor) {
 		return 1;
 	}
-	else if (errorAbs <= 60) { // (60, 0.784)
-		double x = errorAbs / 100;
-		return 1 - x * x * x;
+	else if (errorMs <= zeroPointMs) {
+		double x = errorMs / 100;
+		return std::erf((zeroPointMs - errorMs) / deviationFactor);
 	}
-	else if (errorAbs <= 90) { // (90, 0.541)
-		double x = errorAbs - 120;
-		return 0.00009 * x * x + 0.46;
-	}
-	else if (errorAbs <= 180) { // (0, 0.055)
-		return 1.027 - 0.0054 * errorAbs;
+	else if (errorMs <= minPointMs) {
+		return (errorMs - zeroPointMs) * missPoints / (minPointMs - zeroPointMs);
 	}
 	else {
-		return 0;
+		return missPoints;
 	}
 }
 
-int Score::judge(double difficulty, Uint64 errorMs) {
-	double errorAbs = difficulty * errorMs;
-	if (errorAbs <= 22.5) {
+int Score::judge(double judgeDifficulty, Uint64 errorMs) {
+	if (errorMs <= 22.5 / judgeDifficulty) {
 		return 0;
 	}
-	else if (errorAbs <= 45) {
+	else if (errorMs <= 45 / judgeDifficulty) {
 		return 1;
 	}
-	else if (errorAbs <= 90) {
+	else if (errorMs <= 90 / judgeDifficulty) {
 		return 2;
 	}
-	else if (errorAbs <= 135) {
+	else if (errorMs <= 135 / judgeDifficulty) {
 		return 3;
 	}
-	else if (errorAbs <= 180) {
+	else if (errorMs <= 180) {
 		return 4;
 	}
-	else if (errorAbs <= earlyMissMs) {
+	else if (errorMs <= earlyMissMs) {
 		return 5;
 	}
 	else {
@@ -106,81 +109,59 @@ int Score::judge(double difficulty, Uint64 errorMs) {
 	}
 }
 
-JudgeKeySound Score::judger(double difficulty, int key, ChartVisible& chartVisible, JudgeVisible& judgeNoteVisible, ErrorMeter& errorMeter, Uint64 chartOffset) {
-	Uint64 errorMs;
-	bool early;
-	bool checkNextJudge = false;
-	int judgeResult = 6; // Default judge
+JudgeKeySound Score::judger(double judgeDifficulty, int key, ChartVisible& chartVisible, JudgeVisible& judgeNoteVisible, ErrorMeter& errorMeter, Uint64 chartOffset) {
 	static JudgeKeySound judgeKeySound[4]; // Preserve the last note sound
-	std::list<KeySound>::iterator judgeNote;
-	static KeySound lastNote[4]; // Preserve the last note sound
-	for (int k = 0; k < 4; k++) {
+	//static KeySound lastNote[4]; // Preserve the last note sound
+	/*for (int k = 0; k < 4; k++) {
 		judgeKeySound[k].judge = 6; // Default judge
-	}
-	for (std::list<KeySound>::iterator iter = judgeNote = chartVisible.begin(key); iter != chartVisible.end(key); iter++) {
-		early = SDL_GetTicks64() < iter->time + chartOffset;
-		errorMs = early ? iter->time + chartOffset - SDL_GetTicks64() : SDL_GetTicks64() - iter->time - chartOffset;
-		judgeResult = judge(difficulty, errorMs);
-		if (judgeResult <= 3) { // Better than good or judge window overlap and better than good
-			updateScore(difficulty, early, errorMs, judgeResult);
-			judgeKeySound[key] = {*iter,  judgeResult};
-			judgeNoteVisible.add(key, judgeKeySound[key]);
-			chartVisible.remove(key, iter);
-			judgeKeySound[key].time = SDL_GetTicks64() - chartOffset;
-			errorMeter.add(SDL_GetTicks64(), judgeResult, early ? -(int)errorMs : (int)errorMs);
-			return judgeKeySound[key];
-		}
-		else if (judgeResult > 3 && judgeResult <= 5) { // Bad or miss
-			if (!early) { // Prevent judge window overlap (Later (time) note > earlier (time) note)
-				judgeNote = iter;
-				checkNextJudge = true;
-			}
-			else if (judgeResult == 4) { // Early bad
-				updateScore(difficulty, early, errorMs, judgeResult);
-				judgeKeySound[key] = { *iter,  judgeResult };
-				judgeNoteVisible.add(key, judgeKeySound[key]);
-				chartVisible.remove(key, iter);
-				judgeKeySound[key].time = SDL_GetTicks64() - chartOffset;
-				errorMeter.add(SDL_GetTicks64(), judgeResult, early ? -(int)errorMs : (int)errorMs);
-				return judgeKeySound[key];
-			}
-			else if (judgeResult == 5) { // Early miss (early poor)
-				earlyMiss();
-				judgeKeySound[key] = { *iter,  judgeResult };
-				judgeNoteVisible.add(key, judgeKeySound[key]);
-				judgeKeySound[key].time = SDL_GetTicks64() - chartOffset;
-				errorMeter.add(SDL_GetTicks64(), judgeResult, early ? -(int)errorMs : (int)errorMs);
-				return judgeKeySound[key];
-			}
-		}
-		lastNote[key] = *iter;
-	}
-	// Does not have judge window overlap
-	if (checkNextJudge) { // Return judge 3~5
-		updateScore(difficulty, early, errorMs, judgeResult);
-		judgeKeySound[key] = { *judgeNote,  judgeResult };
-		judgeNoteVisible.add(key, { *judgeNote,  judgeResult });
-		chartVisible.remove(key, judgeNote);
-		judgeKeySound[key].time = SDL_GetTicks64() - chartOffset;
-		errorMeter.add(SDL_GetTicks64(), judgeResult, early ? -(int)errorMs : (int)errorMs);
+	}*/
+
+	// Next and previous is based on the current time
+	std::list<KeySound>::iterator nextNote = std::lower_bound(chartVisible.begin(key), chartVisible.end(key), SDL_GetTicks64() - chartOffset,
+		[](const KeySound& a, const Uint64& b) -> bool {return a.time < b; });
+	if (nextNote == chartVisible.end(key)) {
 		return judgeKeySound[key];
 	}
-	else { // Return judge 4~5
-		if (judgeResult != 6) {
-			updateScore(difficulty, early, errorMs, judgeResult);
-			judgeKeySound[key] = { lastNote[key], judgeResult };
-			judgeNoteVisible.add(key, { *judgeNote,  judgeResult });
-			chartVisible.remove(key, judgeNote);
-			judgeKeySound[key].time = SDL_GetTicks64() - chartOffset;
-			errorMeter.add(SDL_GetTicks64(), judgeResult, early ? -(int)errorMs : (int)errorMs);
-			return judgeKeySound[key];
-		}
-		else { // Not in any judge window
-			judgeKeySound[key] = { lastNote[key], 6} ;
-			judgeKeySound[key].time = SDL_GetTicks64() - chartOffset;
-			return judgeKeySound[key];
-		}
+	// If there are no previous notes, then previous note = next note to reduce branches
+	std::list<KeySound>::iterator previousNote = nextNote;
+	if (nextNote != chartVisible.begin(key)) {
+		std::advance(nextNote, -1);
 	}
+	int errorMsNextNote = std::abs(static_cast<long long>(SDL_GetTicks64() - (nextNote->time + chartOffset)));
+	int errorMsPreviousNote = std::abs(static_cast<long long>(SDL_GetTicks64() - (previousNote->time + chartOffset)));
+
+	// Judge the closest note
+	if (errorMsPreviousNote <= errorMsNextNote) {
+		bool early = SDL_GetTicks64() < previousNote->time + chartOffset;
+		int judgeResult = judge(judgeDifficulty, errorMsPreviousNote);
+		judgeKeySound[key] = { *previousNote,  judgeResult };
+		if (judgeResult == 6) { // Not in any judge window
+			return judgeKeySound[key];
+		}
+		updateScore(judgeDifficulty, early, errorMsPreviousNote, judgeResult);
+		judgeNoteVisible.add(key, judgeKeySound[key]);
+		if (judgeResult <= 4) {
+			chartVisible.remove(key, previousNote);
+		}
+		errorMeter.add(SDL_GetTicks64(), judgeResult, early ? -static_cast<int>(errorMsPreviousNote) : static_cast<int>(errorMsPreviousNote));
+		judgeKeySound[key].time = SDL_GetTicks64() - chartOffset;
+	}
+	else {
+		bool early = SDL_GetTicks64() < nextNote->time + chartOffset;
+		int judgeResult = judge(judgeDifficulty, errorMsNextNote);
+		judgeKeySound[key] = { *nextNote,  judgeResult };
+		if (judgeResult == 6) { // Not in any judge window
+			return judgeKeySound[key];
+		}
+		updateScore(judgeDifficulty, early, errorMsNextNote, judgeResult);
+		judgeNoteVisible.add(key, judgeKeySound[key]);
+		if (judgeResult <= 4) {
+			chartVisible.remove(key, nextNote);
+		}
+		errorMeter.add(SDL_GetTicks64(), judgeResult, early ? -static_cast<int>(errorMsNextNote) : static_cast<int>(errorMsNextNote));
+		judgeKeySound[key].time = SDL_GetTicks64() - chartOffset;
+	}
+	return judgeKeySound[key];
 }
 
 bool Score::missJudger(double difficulty, ChartVisible& chartVisible, JudgeVisible& judgeNoteVisible, Uint64 chartOffset) {
@@ -227,36 +208,35 @@ void Score::clearDan() {
 	M2 = 0;
 }
 
-void Score::updateScore(double difficulty, bool early, Uint64 errorMs, int judgeResult) {
-	scoreV1 += judgeScoreV1(difficulty, errorMs);
-	scoreV1Seg += judgeScoreV1(difficulty, errorMs);
-	scoreV2 += judgeScoreV2(difficulty, errorMs);
-	scoreV2Seg += judgeScoreV2(difficulty, errorMs);
+void Score::updateScore(double judgeDifficulty, bool early, Uint64 errorMs, int judgeResult) {
+	scoreV1 += judgeScoreV1(judgeDifficulty, errorMs);
+	scoreV1Seg += judgeScoreV1(judgeDifficulty, errorMs);
+	scoreV2 += judgeScoreV2(judgeDifficulty, errorMs);
+	scoreV2Seg += judgeScoreV2(judgeDifficulty, errorMs);
 	judgedNoteCount++;
 	judgedNoteCountSeg++;
 	judgeCounter[judgeResult]++;
 	judgeCounterSeg[judgeResult]++;
 	switch (judgeResult) {
 	case 0:
-		hp += 5;
+		hp += 8;
 		break;
 	case 1:
-		hp += 4;
+		hp += 8;
 		break;
 	case 2:
-		hp += 3;
+		hp += 4;
 		break;
 	case 3:
-		hp -= 10;
 		break;
 	case 4:
-		hp -= 25;
+		hp -= 40;
 		break;
 	case 5:
-		hp -= 50;
+		hp -= 80;
 		break;
 	}
-	hp = hp > 1000 ? 1000 : hp;
+	hp = std::min(hp, 1000);
 	notMissCount++;
 	notMissCountSeg++;
 	judgeResult <= 2 ? combo++ : combo = 0;
@@ -282,13 +262,14 @@ void Score::earlyMiss() {
 }
 
 void Score::miss() {
+	scoreV2 -= 2.75;
 	judgedNoteCount++;
 	judgedNoteCountSeg++;
 	judgeCounter[5]++;
 	judgeCounterSeg[5]++;
 	combo = 0;
 	comboSeg = 0;
-	hp -= 50;
+	hp -= 80;
 }
 
 double Score::getScoreV1() {

@@ -108,37 +108,37 @@ void Graphic::drawJudge(int judge) {
 	staticJudge = judge != 6 ? judge : staticJudge;
 	switch (staticJudge) {
 	case 0:
-		nfont[FONT_JUDGE].draw(window, 700, 100, SDL_Color{ 0, 255, 255, 255 }, "MARVELOUS");
+		nfont[FONT_JUDGE].draw(window, 700, 150, SDL_Color{ 0, 255, 255, 255 }, "MARVELOUS");
 		break;
 	case 1:
-		nfont[FONT_JUDGE].draw(window, 730, 100, SDL_Color{ 255, 255, 0, 255 }, "PERFECT");
+		nfont[FONT_JUDGE].draw(window, 730, 150, SDL_Color{ 255, 255, 0, 255 }, "PERFECT");
 		break;
 	case 2:
-		nfont[FONT_JUDGE].draw(window, 760, 100, SDL_Color{ 0, 255, 0, 255 }, "GREAT");
+		nfont[FONT_JUDGE].draw(window, 760, 150, SDL_Color{ 0, 255, 0, 255 }, "GREAT");
 		break;
 	case 3:
-		nfont[FONT_JUDGE].draw(window, 775, 100, SDL_Color{ 0, 0, 255, 255 }, "GOOD");
+		nfont[FONT_JUDGE].draw(window, 775, 150, SDL_Color{ 0, 0, 255, 255 }, "GOOD");
 		break;
 	case 4:
-		nfont[FONT_JUDGE].draw(window, 790, 100, SDL_Color{ 255, 0, 255, 255 }, "BAD");
+		nfont[FONT_JUDGE].draw(window, 790, 150, SDL_Color{ 255, 0, 255, 255 }, "BAD");
 		break;
 	case 5:
-		nfont[FONT_JUDGE].draw(window, 775, 100, SDL_Color{ 255, 0, 0, 255 }, "MISS");
+		nfont[FONT_JUDGE].draw(window, 775, 150, SDL_Color{ 255, 0, 0, 255 }, "MISS");
 		break;
 	}
 }
 
 void Graphic::drawErrorMeter(std::list<JudgeErrorTime>::iterator begin, std::list<JudgeErrorTime>::iterator end, int lifeTime, float scale) {
-	GPU_Blit(errorMeterMiddle, NULL, window, 850, 200);
+	GPU_Blit(errorMeterMiddle, NULL, window, 850, 250);
 	for (std::list<JudgeErrorTime>::iterator iter = begin; iter != end; iter++) {
 		int alpha = 255 - (float)255 * (SDL_GetTicks64() - iter->time) / lifeTime;
 		GPU_SetRGBA(errorMeter[iter->judge], 255, 255, 255, alpha >= 0 ? alpha : 0);
-		GPU_Blit(errorMeter[iter->judge], NULL, window, 850 + iter->error * scale, 200);
+		GPU_Blit(errorMeter[iter->judge], NULL, window, 850 + iter->error * scale, 250);
 	}
 }
 
 void Graphic::drawCombo(char* combo) {
-	nfont[FONT_JUDGE].draw(window, 800, 220, SDL_Color{ 255, 255, 255, 255 }, combo);
+	nfont[FONT_JUDGE].draw(window, 800, 270, SDL_Color{ 255, 255, 255, 255 }, combo);
 }
 
 void Graphic::drawText() {

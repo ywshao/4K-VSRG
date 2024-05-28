@@ -33,13 +33,13 @@ public:
 class Score {
 private:
 	// Stepmania & Etterna interval
-	int judgeScoreV1(double difficulty, Uint64 errorMs);
+	int judgeScoreV1(double judgeDifficulty, Uint64 errorMs);
 	// Etterna Wife3 style interval
-	double judgeScoreV2(double difficulty, Uint64 errorMs);
+	double judgeScoreV2(double judgeDifficulty, Uint64 errorMs);
 	//
-	int judge(double difficulty, Uint64 errorMs);
+	int judge(double judgeDifficulty, Uint64 errorMs);
 	// Update score
-	void updateScore(double difficulty, bool early, Uint64 errorMs, int judgeResult);
+	void updateScore(double judgeDifficulty, bool early, Uint64 errorMs, int judgeResult);
 	void earlyMiss();
 	void miss();
 	//
