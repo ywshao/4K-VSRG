@@ -1,15 +1,19 @@
 #include "game.h"
 
+#include <omp.h>
+
 void Game::bmsInit(bool dan) {
 	audio.portAudioExit();
 	audio.portAudioInit(audioDeviceIndex);
 	static std::filesystem::path previousFilePath = {};
 	std::filesystem::path dirPath = dan ? bmsPath / danDirPath : bmsPath / bmsDir[bmsSelect];
 	std::filesystem::path filePath = dan ? dirPath / danFilePath : dirPath / bmsFileDir[bmsSelect][bmsFileSelect];
+	bmsParser.clear();
+	bmsParser.parseFile(filePath.string().c_str());
+	// Load the sound if it is not the same file
 	if (previousFilePath != filePath) {
 		previousFilePath = filePath;
-		bmsParser.clear();
-		bmsParser.parseFile(filePath.string().c_str());
+#pragma omp parallel for schedule(static, 64) num_threads(2)
 		for (int wav = 0; wav < 1536; wav++) {
 			audio.offloadSound(wav);
 			if (!bmsParser.wav[wav].empty()) {
@@ -18,13 +22,15 @@ void Game::bmsInit(bool dan) {
 			else {
 				audio.loadSound(wav, "0");
 			}
+			if (rate != 100) {
+				audio.offloadNewSound(wav);
+				audio.changeRate(wsola, rate, wav);
+			}
 		}
 	}
-	else {
-		bmsParser.clear();
-		bmsParser.parseFile(filePath.string().c_str());
-	}
+	// Change rate
 	if (rate != 100) {
+#pragma omp parallel for schedule(static, 64) num_threads(2)
 		for (int wav = 0; wav < 1536; wav++) {
 			audio.offloadNewSound(wav);
 			audio.changeRate(wsola, rate, wav);
@@ -148,7 +154,7 @@ void Game::exit() {
 	std::exit(0);
 }
 
-void Game::update() {
+void Game::update(Uint64 currentTime) {
 	graphic.clear();
 	// Esc
 	const Uint8* keyboardState = SDL_GetKeyboardState(NULL);
@@ -165,13 +171,13 @@ void Game::update() {
 	// Enter and arrow keys
 	for (int key = 5; key < 11; key++) {
 		if (keyboardState[keyMap[key]]) {
-			if (SDL_GetTicks64() >= keyDelay[key]) {
+			if (currentTime >= keyDelay[key]) {
 				if (!keyPressed[key]) {
-					keyDelay[key] = SDL_GetTicks64() + 300;
+					keyDelay[key] = currentTime + 300;
 					keyPressed[key] = true;
 				}
 				else {
-					keyDelay[key] = SDL_GetTicks64() + 20;
+					keyDelay[key] = currentTime + 20;
 				}
 				keyTrigger = true;
 			}
@@ -356,14 +362,14 @@ void Game::update() {
 	{
 		// Key
 		static JudgeKeySound judgeKeySound({ 0, 0 }, 6);
-		if (score.missJudger(1/*Test*/, chartVisible, judgeNoteVisible, chartOffset)) {
+		if (score.missJudger(currentTime, 1/*Test difficulty*/, chartVisible, judgeNoteVisible, chartOffset)) {
 			judgeKeySound.judge = 5;
 		}
 		const Uint8* keyboardState = SDL_GetKeyboardState(NULL);
 		for (int key = 0; key < 4; key++) {
 			if (keyboardState[keyMap[key]]) {
 				if (!keyPressed[key]) {
-					judgeKeySound = score.judger(1/*Test*/, key, chartVisible, judgeNoteVisible, errorMeter, chartOffset);
+					judgeKeySound = score.judger(currentTime, 1/*Test difficulty*/, key, chartVisible, judgeNoteVisible, errorMeter, chartOffset);
 					if (judgeKeySound.sound) {
 						audio.playSound(rate != 100, judgeKeySound.sound);
 					}
@@ -395,7 +401,7 @@ void Game::update() {
 		judgeNoteVisible.update(chartOffset);
 		judgeKeyVisible.update(chartOffset);
 		chartVisible.update(&audio, &chart, chartOffset, rate != 100);
-		errorMeter.update();
+		errorMeter.update(currentTime);
 		// Test
 		score.hp = 100;
 		//

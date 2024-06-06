@@ -21,9 +21,9 @@ void ErrorMeter::add(Uint64 time, int judge, int error) {
 	errorList.push_back({ time, judge, error });
 }
 
-void ErrorMeter::update() {
+void ErrorMeter::update(Uint64 currentTime) {
 	for (std::list<JudgeErrorTime>::iterator iter = errorList.begin(); iter != errorList.end();) {
-		if (SDL_GetTicks64() >= iter->time + lifeTime) {
+		if (currentTime >= iter->time + lifeTime) {
 			iter = errorList.erase(iter);
 		}
 		else {
@@ -109,7 +109,7 @@ int Score::judge(double judgeDifficulty, Uint64 errorMs) {
 	}
 }
 
-JudgeKeySound Score::judger(double judgeDifficulty, int key, ChartVisible& chartVisible, JudgeVisible& judgeNoteVisible, ErrorMeter& errorMeter, Uint64 chartOffset) {
+JudgeKeySound Score::judger(Uint64 currentTime, double judgeDifficulty, int key, ChartVisible& chartVisible, JudgeVisible& judgeNoteVisible, ErrorMeter& errorMeter, Uint64 chartOffset) {
 	static JudgeKeySound judgeKeySound[4]; // Preserve the last note sound
 	//static KeySound lastNote[4]; // Preserve the last note sound
 	/*for (int k = 0; k < 4; k++) {
@@ -117,7 +117,7 @@ JudgeKeySound Score::judger(double judgeDifficulty, int key, ChartVisible& chart
 	}*/
 
 	// Next and previous is based on the current time
-	std::list<KeySound>::iterator nextNote = std::lower_bound(chartVisible.begin(key), chartVisible.end(key), SDL_GetTicks64() - chartOffset,
+	std::list<KeySound>::iterator nextNote = std::lower_bound(chartVisible.begin(key), chartVisible.end(key), currentTime - chartOffset,
 		[](const KeySound& a, const Uint64& b) -> bool {return a.time < b; });
 	if (nextNote == chartVisible.end(key)) {
 		return judgeKeySound[key];
@@ -127,12 +127,12 @@ JudgeKeySound Score::judger(double judgeDifficulty, int key, ChartVisible& chart
 	if (nextNote != chartVisible.begin(key)) {
 		std::advance(nextNote, -1);
 	}
-	int errorMsNextNote = std::abs(static_cast<long long>(SDL_GetTicks64() - (nextNote->time + chartOffset)));
-	int errorMsPreviousNote = std::abs(static_cast<long long>(SDL_GetTicks64() - (previousNote->time + chartOffset)));
+	int errorMsNextNote = std::abs(static_cast<long long>(currentTime - (nextNote->time + chartOffset)));
+	int errorMsPreviousNote = std::abs(static_cast<long long>(currentTime - (previousNote->time + chartOffset)));
 
 	// Judge the closest note
 	if (errorMsPreviousNote <= errorMsNextNote) {
-		bool early = SDL_GetTicks64() < previousNote->time + chartOffset;
+		bool early = currentTime < previousNote->time + chartOffset;
 		int judgeResult = judge(judgeDifficulty, errorMsPreviousNote);
 		judgeKeySound[key] = { *previousNote,  judgeResult };
 		if (judgeResult == 6) { // Not in any judge window
@@ -143,11 +143,11 @@ JudgeKeySound Score::judger(double judgeDifficulty, int key, ChartVisible& chart
 		if (judgeResult <= 4) {
 			chartVisible.remove(key, previousNote);
 		}
-		errorMeter.add(SDL_GetTicks64(), judgeResult, early ? -static_cast<int>(errorMsPreviousNote) : static_cast<int>(errorMsPreviousNote));
-		judgeKeySound[key].time = SDL_GetTicks64() - chartOffset;
+		errorMeter.add(currentTime, judgeResult, early ? -static_cast<int>(errorMsPreviousNote) : static_cast<int>(errorMsPreviousNote));
+		judgeKeySound[key].time = currentTime - chartOffset;
 	}
 	else {
-		bool early = SDL_GetTicks64() < nextNote->time + chartOffset;
+		bool early = currentTime < nextNote->time + chartOffset;
 		int judgeResult = judge(judgeDifficulty, errorMsNextNote);
 		judgeKeySound[key] = { *nextNote,  judgeResult };
 		if (judgeResult == 6) { // Not in any judge window
@@ -158,17 +158,17 @@ JudgeKeySound Score::judger(double judgeDifficulty, int key, ChartVisible& chart
 		if (judgeResult <= 4) {
 			chartVisible.remove(key, nextNote);
 		}
-		errorMeter.add(SDL_GetTicks64(), judgeResult, early ? -static_cast<int>(errorMsNextNote) : static_cast<int>(errorMsNextNote));
-		judgeKeySound[key].time = SDL_GetTicks64() - chartOffset;
+		errorMeter.add(currentTime, judgeResult, early ? -static_cast<int>(errorMsNextNote) : static_cast<int>(errorMsNextNote));
+		judgeKeySound[key].time = currentTime - chartOffset;
 	}
 	return judgeKeySound[key];
 }
 
-bool Score::missJudger(double difficulty, ChartVisible& chartVisible, JudgeVisible& judgeNoteVisible, Uint64 chartOffset) {
+bool Score::missJudger(Uint64 currentTime, double difficulty, ChartVisible& chartVisible, JudgeVisible& judgeNoteVisible, Uint64 chartOffset) {
 	bool flag = false;
 	for (int key = 0; key < 4; key++) {
 		for (std::list<KeySound>::iterator iter = chartVisible.begin(key); iter != chartVisible.end(key);) {
-			if (SDL_GetTicks64() >= iter->time + chartOffset + lateMissMs) {
+			if (currentTime >= iter->time + chartOffset + lateMissMs) {
 				miss();
 				judgeNoteVisible.add(key, { *iter,  5 });
 				iter = chartVisible.remove(key, iter);

@@ -6,8 +6,8 @@
 #include <vector>
 #include <list>
 
-#define soundVolume 0.2
-#define maxSound 1536
+constexpr float soundVolume = 0.5;
+constexpr size_t maxSound = 1536;
 
 class Audio {
 private:
@@ -29,7 +29,7 @@ private:
 		PaStreamCallbackFlags statusFlags,
 		void *userData);
 	PaStream* stream;
-	const int framesPerBuffer = 256;
+	const size_t framesPerBuffer = 256;
 	std::list<PlayingSound> playingSounds;
 	Sound sound[maxSound];
 	Sound newSound[maxSound];

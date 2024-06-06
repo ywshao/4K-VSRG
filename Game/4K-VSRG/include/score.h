@@ -25,7 +25,7 @@ public:
 	void setScale(int factor);
 	float getScale();
 	void add(Uint64 time, int judge, int error);
-	void update();
+	void update(Uint64 currentTime);
 	std::list<JudgeErrorTime>::iterator begin();
 	std::list<JudgeErrorTime>::iterator end();
 };
@@ -61,8 +61,8 @@ public:
 	int hp;
 	int judgeCounter[7];
 	int judgeCounterSeg[7];
-	JudgeKeySound judger(double difficulty, int key, ChartVisible &chartVisible, JudgeVisible& judgeNoteVisible, ErrorMeter& errorMeter, Uint64 chartOffset);
-	bool missJudger(double difficulty, ChartVisible& chartVisible, JudgeVisible& judgeNoteVisible, Uint64 chartOffset);
+	JudgeKeySound judger(Uint64 currentTime, double difficulty, int key, ChartVisible &chartVisible, JudgeVisible& judgeNoteVisible, ErrorMeter& errorMeter, Uint64 chartOffset);
+	bool missJudger(Uint64 currentTime, double difficulty, ChartVisible& chartVisible, JudgeVisible& judgeNoteVisible, Uint64 chartOffset);
 
 	void clearSeg();
 	void clearDan();

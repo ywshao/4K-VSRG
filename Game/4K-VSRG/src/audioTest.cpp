@@ -13,47 +13,35 @@ int Audio::callback(const void* inputBuffer,
 	PaStreamCallbackFlags statusFlags,
 	void* userData) {
 	std::list<PlayingSound>* playingSounds = (std::list<PlayingSound>*)userData;
-	float output_left = 0;
-	float output_right = 0;
 	memset(outputBuffer, 0, 2 * framesPerBuffer * sizeof(float));
 	if (playingSounds->empty()) {
 		return 0;
 	}
-	// TODO: Calculate the output sound when adding the sound instead of calculating it in callback
-	// TODO: New method: O(framesPerBuffer * bufferPerSecond) = O(44100)
-	// TODO: Callback method (current): O(playingSouns * framesPerBuffer * bufferPerSecond) = O(playingSouns * 44100)
 	for (std::list<PlayingSound>::iterator it = playingSounds->begin(); it != playingSounds->end();) {
-		bool flag = true;
 		float* output = (float*)outputBuffer;
-		for (int times = 0; times < framesPerBuffer; times++) {
-			*output++ += it->sound->left[it->playing_pos] * soundVolume;
-			*output++ += it->sound->right[it->playing_pos] * soundVolume;
-			if (++(it->playing_pos) >= it->sound->left.size()) {
-				it = playingSounds->erase(it);
-				flag = false;
-				break;
+#pragma omp parallel for schedule(static, 64) num_threads(4)
+		for (int times = 0; times < framesPerBuffer; ++times) {
+			if (it->playing_pos + times < it->sound->left.size()) {
+				output[times << 1] += it->sound->left[it->playing_pos + times] * soundVolume;
+				output[(times << 1) | 1] += it->sound->right[it->playing_pos + times] * soundVolume;
 			}
 		}
-		if (flag) {
+		it->playing_pos += framesPerBuffer;
+		if (it->playing_pos < it->sound->left.size()) {
 			++it;
+		}
+		else {
+			it = playingSounds->erase(it);
 		}
 	}
 	float* output = (float*)outputBuffer;
-	for (int times = 0; times < framesPerBuffer; times++) {
-		if (*output >= 0) {
-			*output = -std::exp(-*output) + 1;
+	for (int times = 0; times < (framesPerBuffer << 1); ++times) {
+		if (output[times] >= 0) {
+			output[times] = -std::exp(-output[times]) + 1;
 		}
 		else {
-			*output = std::exp(*output) - 1;
+			output[times] = std::exp(output[times]) - 1;
 		}
-		++output;
-		if (*output >= 0) {
-			*output = -std::exp(-*output) + 1;
-		}
-		else {
-			*output = std::exp(*output) - 1;
-		}
-		++output;
 	}
 	return 0;
 }
@@ -64,7 +52,7 @@ void Audio::portAudioInit(PaDeviceIndex deviceIndex) {
 	if (err != paNoError)
 		printf("PortAudio error: %s\n", Pa_GetErrorText(err));
 	std::vector<const PaDeviceInfo*> device;
-	for (int a = 0; a < Pa_GetDeviceCount(); a++) {
+	for (int a = 0; a < Pa_GetDeviceCount(); ++a) {
 		device.push_back(Pa_GetDeviceInfo(a));
 	}
 	static PaStreamParameters outputParameters = {

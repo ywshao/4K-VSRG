@@ -93,5 +93,5 @@ private:
 public:
 	void init();
 	void exit();
-	void update();
+	void update(Uint64 currentTime);
 };

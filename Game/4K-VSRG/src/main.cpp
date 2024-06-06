@@ -12,7 +12,7 @@ int main(int argc, char** args) {
 				return 0;
 			}
 		}
-		game.update();
+		game.update(SDL_GetTicks64());
 	}
 	return 0;
 }
