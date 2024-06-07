@@ -175,7 +175,7 @@ void Audio::resample(int index, int sampleRate) {
 		float* soundLeft = new float[sound[index].left.size()];
 		std::copy(sound[index].left.begin(), sound[index].left.end(), soundLeft);
 		soundtouch_putSamples(hLeft, soundLeft, sound[index].left.size());
-		int newSize = (int)((float)sound[index].left.size() * 44100 / sampleRate);
+		size_t newSize = (size_t)((float)sound[index].left.size() * 44100 / sampleRate);
 		float* newSoundLeft = new float[newSize];
 		std::fill(newSoundLeft, newSoundLeft + newSize, 0);
 		soundtouch_receiveSamples(hLeft, newSoundLeft, newSize);
@@ -195,7 +195,7 @@ void Audio::resample(int index, int sampleRate) {
 		float* soundRight = new float[sound[index].right.size()];
 		std::copy(sound[index].right.begin(), sound[index].right.end(), soundRight);
 		soundtouch_putSamples(hRight, soundRight, sound[index].right.size());
-		int newSize = (int)((float)sound[index].right.size() * 44100 / sampleRate);
+		size_t newSize = (size_t)((float)sound[index].right.size() * 44100 / sampleRate);
 		float* newSoundRight = new float[newSize];
 		std::fill(newSoundRight, newSoundRight + newSize, 0);
 		soundtouch_receiveSamples(hRight, newSoundRight, newSize);
@@ -225,7 +225,7 @@ void Audio::changeRate(bool wsola, int rate, int index) {
 		float* soundLeft = new float[sound[index].left.size()];
 		std::copy(sound[index].left.begin(), sound[index].left.end(), soundLeft);
 		soundtouch_putSamples(hLeft, soundLeft, sound[index].left.size());
-		int newSize = (int)((float)sound[index].left.size() * 100 / rate);
+		size_t newSize = (size_t)((float)sound[index].left.size() * 100 / rate + 1);
 		float* newSoundLeft = new float[newSize];
 		std::fill(newSoundLeft, newSoundLeft + newSize, 0);
 		soundtouch_receiveSamples(hLeft, newSoundLeft, newSize);
@@ -252,7 +252,7 @@ void Audio::changeRate(bool wsola, int rate, int index) {
 		float* soundRight = new float[sound[index].right.size()];
 		std::copy(sound[index].right.begin(), sound[index].right.end(), soundRight);
 		soundtouch_putSamples(hRight, soundRight, sound[index].right.size());
-		int newSize = (int)((float)sound[index].right.size() * 100 / rate);
+		size_t newSize = (size_t)((float)sound[index].right.size() * 100 / rate + 1);
 		float* newSoundRight = new float[newSize];
 		std::fill(newSoundRight, newSoundRight + newSize, 0);
 		soundtouch_receiveSamples(hRight, newSoundRight, newSize);

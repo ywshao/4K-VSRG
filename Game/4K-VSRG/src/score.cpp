@@ -110,22 +110,25 @@ int Score::judge(double judgeDifficulty, Uint64 errorMs) {
 }
 
 JudgeKeySound Score::judger(Uint64 currentTime, double judgeDifficulty, int key, ChartVisible& chartVisible, JudgeVisible& judgeNoteVisible, ErrorMeter& errorMeter, Uint64 chartOffset) {
-	static JudgeKeySound judgeKeySound[4]; // Preserve the last note sound
-	//static KeySound lastNote[4]; // Preserve the last note sound
-	/*for (int k = 0; k < 4; k++) {
-		judgeKeySound[k].judge = 6; // Default judge
-	}*/
+	static JudgeKeySound judgeKeySound[4]; // Preserve the last note sound for audio purpose
+	static int judgeResult = 6; // Preserve the last judge for visual purpose
+
+	// If no notes, just return key sound and last judge
+	if (!chartVisible.count(key)) {
+		judgeKeySound[key].judge = judgeResult;
+		return judgeKeySound[key];
+	}
 
 	// Next and previous is based on the current time
 	std::list<KeySound>::iterator nextNote = std::lower_bound(chartVisible.begin(key), chartVisible.end(key), currentTime - chartOffset,
 		[](const KeySound& a, const Uint64& b) -> bool {return a.time < b; });
-	if (nextNote == chartVisible.end(key)) {
-		return judgeKeySound[key];
-	}
 	// If there are no previous notes, then previous note = next note to reduce branches
 	std::list<KeySound>::iterator previousNote = nextNote;
-	if (nextNote != chartVisible.begin(key)) {
-		std::advance(nextNote, -1);
+	if (previousNote != chartVisible.begin(key)) {
+		std::advance(previousNote, -1);
+	}
+	if (nextNote == chartVisible.end(key)) {
+		nextNote = previousNote;
 	}
 	int errorMsNextNote = std::abs(static_cast<long long>(currentTime - (nextNote->time + chartOffset)));
 	int errorMsPreviousNote = std::abs(static_cast<long long>(currentTime - (previousNote->time + chartOffset)));
@@ -133,7 +136,7 @@ JudgeKeySound Score::judger(Uint64 currentTime, double judgeDifficulty, int key,
 	// Judge the closest note
 	if (errorMsPreviousNote <= errorMsNextNote) {
 		bool early = currentTime < previousNote->time + chartOffset;
-		int judgeResult = judge(judgeDifficulty, errorMsPreviousNote);
+		judgeResult = judge(judgeDifficulty, errorMsPreviousNote);
 		judgeKeySound[key] = { *previousNote,  judgeResult };
 		if (judgeResult == 6) { // Not in any judge window
 			return judgeKeySound[key];
@@ -148,7 +151,7 @@ JudgeKeySound Score::judger(Uint64 currentTime, double judgeDifficulty, int key,
 	}
 	else {
 		bool early = currentTime < nextNote->time + chartOffset;
-		int judgeResult = judge(judgeDifficulty, errorMsNextNote);
+		judgeResult = judge(judgeDifficulty, errorMsNextNote);
 		judgeKeySound[key] = { *nextNote,  judgeResult };
 		if (judgeResult == 6) { // Not in any judge window
 			return judgeKeySound[key];

@@ -65,22 +65,22 @@ void Graphic::draw() {
 void Graphic::drawNote(ChartVisible &chartVisible, float scrollSpeed, Uint64 chartOffset) {
 	for (int key = 0; key < 4; key++) {
 		for (std::list<KeySound>::iterator iter = chartVisible.begin(key); iter != chartVisible.end(key); iter++) {
-			GPU_Blit(note[key], NULL, window, 700 + key * 100, (int)(SDL_GetTicks64() - chartOffset - iter->time) * scrollSpeed + receipterY);
+			GPU_Blit(note[key], NULL, window, 800 + key * 100, (int)(SDL_GetTicks64() - chartOffset - iter->time) * scrollSpeed + receipterY);
 		}
 	}
 }
 
 void Graphic::drawReceiptor() {
-	GPU_Blit(receiptor[0], NULL, window, 700, receipterY);
-	GPU_Blit(receiptor[1], NULL, window, 800, receipterY);
-	GPU_Blit(receiptor[2], NULL, window, 900, receipterY);
-	GPU_Blit(receiptor[3], NULL, window, 1000, receipterY);
+	GPU_Blit(receiptor[0], NULL, window, 800, receipterY);
+	GPU_Blit(receiptor[1], NULL, window, 900, receipterY);
+	GPU_Blit(receiptor[2], NULL, window, 1000, receipterY);
+	GPU_Blit(receiptor[3], NULL, window, 1100, receipterY);
 }
 
 void Graphic::drawKeyPressed(bool keyPressed[4]) {
 	for (int key = 0; key < 4; key++) {
 		if (keyPressed[key]) {
-			GPU_Blit(pressed[key], NULL, window, 700 + key * 100, receipterY);
+			GPU_Blit(pressed[key], NULL, window, 800 + key * 100, receipterY);
 		}
 	}
 }
@@ -89,7 +89,7 @@ void Graphic::drawJudgeNote(JudgeVisible& judgeNoteVisible, Uint64 chartOffset) 
 	for (int key = 0; key < 4; key++) {
 		std::list<JudgeKeySound>::iterator iter = judgeNoteVisible.begin(key);
 		for (; iter != judgeNoteVisible.end(key); iter++) {
-			GPU_Blit(judgeNote[iter->judge], NULL, window, 1200 + key * 100, SDL_GetTicks64() - iter->time - chartOffset);
+			GPU_Blit(judgeNote[iter->judge], NULL, window, 1300 + key * 100, SDL_GetTicks64() - iter->time - chartOffset);
 		}
 	}
 }
@@ -98,7 +98,7 @@ void Graphic::drawJudgeKey(JudgeVisible& judgeKeyVisible, Uint64 chartOffset) {
 	for (int key = 0; key < 4; key++) {
 		std::list<JudgeKeySound>::iterator iter = judgeKeyVisible.begin(key);
 		for (; iter != judgeKeyVisible.end(key); iter++) {
-			GPU_Blit(judgeKey[iter->judge], NULL, window, 1200 + key * 100, SDL_GetTicks64() - iter->time - chartOffset);
+			GPU_Blit(judgeKey[iter->judge], NULL, window, 1300 + key * 100, SDL_GetTicks64() - iter->time - chartOffset);
 		}
 	}
 }
@@ -108,37 +108,37 @@ void Graphic::drawJudge(int judge) {
 	staticJudge = judge != 6 ? judge : staticJudge;
 	switch (staticJudge) {
 	case 0:
-		nfont[FONT_JUDGE].draw(window, 700, 150, SDL_Color{ 0, 255, 255, 255 }, "MARVELOUS");
+		nfont[FONT_JUDGE].draw(window, 800, 150, SDL_Color{ 0, 255, 255, 255 }, "MARVELOUS");
 		break;
 	case 1:
-		nfont[FONT_JUDGE].draw(window, 730, 150, SDL_Color{ 255, 255, 0, 255 }, "PERFECT");
+		nfont[FONT_JUDGE].draw(window, 830, 150, SDL_Color{ 255, 255, 0, 255 }, "PERFECT");
 		break;
 	case 2:
-		nfont[FONT_JUDGE].draw(window, 760, 150, SDL_Color{ 0, 255, 0, 255 }, "GREAT");
+		nfont[FONT_JUDGE].draw(window, 860, 150, SDL_Color{ 0, 255, 0, 255 }, "GREAT");
 		break;
 	case 3:
-		nfont[FONT_JUDGE].draw(window, 775, 150, SDL_Color{ 0, 0, 255, 255 }, "GOOD");
+		nfont[FONT_JUDGE].draw(window, 875, 150, SDL_Color{ 0, 0, 255, 255 }, "GOOD");
 		break;
 	case 4:
-		nfont[FONT_JUDGE].draw(window, 790, 150, SDL_Color{ 255, 0, 255, 255 }, "BAD");
+		nfont[FONT_JUDGE].draw(window, 890, 150, SDL_Color{ 255, 0, 255, 255 }, "BAD");
 		break;
 	case 5:
-		nfont[FONT_JUDGE].draw(window, 775, 150, SDL_Color{ 255, 0, 0, 255 }, "MISS");
+		nfont[FONT_JUDGE].draw(window, 875, 150, SDL_Color{ 255, 0, 0, 255 }, "MISS");
 		break;
 	}
 }
 
 void Graphic::drawErrorMeter(std::list<JudgeErrorTime>::iterator begin, std::list<JudgeErrorTime>::iterator end, int lifeTime, float scale) {
-	GPU_Blit(errorMeterMiddle, NULL, window, 850, 250);
+	GPU_Blit(errorMeterMiddle, NULL, window, 950, 250);
 	for (std::list<JudgeErrorTime>::iterator iter = begin; iter != end; iter++) {
 		int alpha = 255 - (float)255 * (SDL_GetTicks64() - iter->time) / lifeTime;
 		GPU_SetRGBA(errorMeter[iter->judge], 255, 255, 255, alpha >= 0 ? alpha : 0);
-		GPU_Blit(errorMeter[iter->judge], NULL, window, 850 + iter->error * scale, 250);
+		GPU_Blit(errorMeter[iter->judge], NULL, window, 950 + iter->error * scale, 250);
 	}
 }
 
 void Graphic::drawCombo(char* combo) {
-	nfont[FONT_JUDGE].draw(window, 800, 270, SDL_Color{ 255, 255, 255, 255 }, combo);
+	nfont[FONT_JUDGE].draw(window, 900, 270, SDL_Color{ 255, 255, 255, 255 }, combo);
 }
 
 void Graphic::drawText() {
