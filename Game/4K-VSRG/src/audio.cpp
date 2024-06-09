@@ -3,8 +3,9 @@
 #include <cstring>
 
 #include <cmath>
+#include <memory>
 
-#include "audioTest.h"
+#include "audio.h"
 
 int Audio::callback(const void* inputBuffer,
 	void* outputBuffer,
@@ -12,11 +13,18 @@ int Audio::callback(const void* inputBuffer,
 	const PaStreamCallbackTimeInfo* timeInfo,
 	PaStreamCallbackFlags statusFlags,
 	void* userData) {
-	std::list<PlayingSound>* playingSounds = (std::list<PlayingSound>*)userData;
+	// Unpack struct from userData
+	Audio::CallbackUserData CallbackUserData = *(Audio::CallbackUserData*)userData;
+	bool stop = *CallbackUserData.stop;
+	std::list<PlayingSound>* playingSounds = CallbackUserData.playingSounds;
+	// Default is no sound
 	memset(outputBuffer, 0, 2 * framesPerBuffer * sizeof(float));
-	if (playingSounds->empty()) {
+	// If no sounds or Audio::stop is true, nothing will be played
+	if (playingSounds->empty() || stop) {
+		playingSounds->clear();
 		return 0;
 	}
+	// Play sounds
 	for (std::list<PlayingSound>::iterator it = playingSounds->begin(); it != playingSounds->end();) {
 		float* output = (float*)outputBuffer;
 #pragma omp parallel for schedule(static, 64) num_threads(4)
@@ -34,6 +42,7 @@ int Audio::callback(const void* inputBuffer,
 			it = playingSounds->erase(it);
 		}
 	}
+	// A non-linear compressor for testing.
 	float* output = (float*)outputBuffer;
 	for (int times = 0; times < (framesPerBuffer << 1); ++times) {
 		if (output[times] >= 0) {
@@ -62,7 +71,8 @@ void Audio::portAudioInit(PaDeviceIndex deviceIndex) {
 		(double)framesPerBuffer / 44100, // suggestedLatency
 		NULL // hostApiSpecificStreamInfo
 	};
-	Pa_OpenStream(&stream, nullptr, &outputParameters, 44100, framesPerBuffer, paNoFlag, callback, &playingSounds);
+	static std::unique_ptr<Audio::CallbackUserData> CallbackUserData = std::make_unique<Audio::CallbackUserData>(&stop, &playingSounds);
+	Pa_OpenStream(&stream, nullptr, &outputParameters, 44100, framesPerBuffer, paNoFlag, callback, CallbackUserData.get());
 	Pa_StartStream(stream);
 	return;
 }
@@ -75,6 +85,7 @@ void Audio::portAudioExit() {
 }
 
 void Audio::playSound(bool changeRate, int index) {
+	Audio::stop = false;
 	/*if (playingSounds.size() >= 128) {
 		return;
 	}*/
@@ -278,7 +289,7 @@ void Audio::offloadNewSound(int index) {
 }
 
 void Audio::stopSound() {
-	playingSounds.clear();
+	Audio::stop = true;
 }
 
 int Audio::getCurrentSoundNum() {

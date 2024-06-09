@@ -3,7 +3,7 @@
 #include <SDL.h>
 #include <list>
 #include <queue>
-#include "audioTest.h"
+#include "audio.h"
 
 #define keyNum 4
 #define addNoteMs 1000

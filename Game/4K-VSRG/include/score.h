@@ -40,6 +40,7 @@ private:
 	int judge(double judgeDifficulty, Uint64 errorMs);
 	// Update score
 	void updateScore(double judgeDifficulty, bool early, Uint64 errorMs, int judgeResult);
+	void updateHp(int judgeResult);
 	void earlyMiss();
 	void miss();
 	//

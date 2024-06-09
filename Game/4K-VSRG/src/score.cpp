@@ -134,6 +134,7 @@ JudgeKeySound Score::judger(Uint64 currentTime, double judgeDifficulty, int key,
 	int errorMsPreviousNote = std::abs(static_cast<long long>(currentTime - (previousNote->time + chartOffset)));
 
 	// Judge the closest note
+
 	if (errorMsPreviousNote <= errorMsNextNote) {
 		bool early = currentTime < previousNote->time + chartOffset;
 		judgeResult = judge(judgeDifficulty, errorMsPreviousNote);
@@ -141,7 +142,13 @@ JudgeKeySound Score::judger(Uint64 currentTime, double judgeDifficulty, int key,
 		if (judgeResult == 6) { // Not in any judge window
 			return judgeKeySound[key];
 		}
-		updateScore(judgeDifficulty, early, errorMsPreviousNote, judgeResult);
+		else if (judgeResult == 5) { // Early miss (early poor)
+			earlyMiss();
+		}
+		else {
+			updateScore(judgeDifficulty, early, errorMsPreviousNote, judgeResult);
+			updateHp(judgeResult);
+		}
 		judgeNoteVisible.add(key, judgeKeySound[key]);
 		if (judgeResult <= 4) {
 			chartVisible.remove(key, previousNote);
@@ -156,7 +163,13 @@ JudgeKeySound Score::judger(Uint64 currentTime, double judgeDifficulty, int key,
 		if (judgeResult == 6) { // Not in any judge window
 			return judgeKeySound[key];
 		}
-		updateScore(judgeDifficulty, early, errorMsNextNote, judgeResult);
+		else if (judgeResult == 5) { // Early miss (early poor)
+			earlyMiss();
+		}
+		else {
+			updateScore(judgeDifficulty, early, errorMsNextNote, judgeResult);
+			updateHp(judgeResult);
+		}
 		judgeNoteVisible.add(key, judgeKeySound[key]);
 		if (judgeResult <= 4) {
 			chartVisible.remove(key, nextNote);
@@ -178,7 +191,7 @@ bool Score::missJudger(Uint64 currentTime, double difficulty, ChartVisible& char
 				flag = true;
 			}
 			else {
-				iter++;
+				++iter;
 			}
 		}
 	}
@@ -220,6 +233,25 @@ void Score::updateScore(double judgeDifficulty, bool early, Uint64 errorMs, int 
 	judgedNoteCountSeg++;
 	judgeCounter[judgeResult]++;
 	judgeCounterSeg[judgeResult]++;
+	notMissCount++;
+	notMissCountSeg++;
+	judgeResult <= 2 ? combo++ : combo = 0;
+	judgeResult <= 2 ? comboSeg++ : comboSeg = 0;
+
+	// Welford's online algorithm
+	int errorMsSigned = early ? -(int)errorMs : errorMs;
+	double delta = errorMsSigned - mean;
+	mean += delta / notMissCount;
+	double delta2 = errorMsSigned - mean;
+	M2 += delta * delta2;
+
+	double deltaSeg = errorMsSigned - meanSeg;
+	meanSeg += deltaSeg / notMissCountSeg;
+	double delta2Seg = errorMsSigned - meanSeg;
+	M2Seg += deltaSeg * delta2Seg;
+}
+
+void Score::updateHp(int judgeResult) {
 	switch (judgeResult) {
 	case 0:
 		hp += 8;
@@ -240,22 +272,6 @@ void Score::updateScore(double judgeDifficulty, bool early, Uint64 errorMs, int 
 		break;
 	}
 	hp = std::min(hp, 1000);
-	notMissCount++;
-	notMissCountSeg++;
-	judgeResult <= 2 ? combo++ : combo = 0;
-	judgeResult <= 2 ? comboSeg++ : comboSeg = 0;
-
-	// Welford's online algorithm
-	int errorMsSigned = early ? -(int)errorMs : errorMs;
-	double delta = errorMsSigned - mean;
-	mean += delta / notMissCount;
-	double delta2 = errorMsSigned - mean;
-	M2 += delta * delta2;
-
-	double deltaSeg = errorMsSigned - meanSeg;
-	meanSeg += deltaSeg / notMissCountSeg;
-	double delta2Seg = errorMsSigned - meanSeg;
-	M2Seg += deltaSeg * delta2Seg;
 }
 
 void Score::earlyMiss() {
@@ -266,6 +282,7 @@ void Score::earlyMiss() {
 
 void Score::miss() {
 	scoreV2 -= 2.75;
+	scoreV2Seg -= 2.75;
 	judgedNoteCount++;
 	judgedNoteCountSeg++;
 	judgeCounter[5]++;

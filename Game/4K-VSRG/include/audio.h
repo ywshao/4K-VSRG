@@ -22,6 +22,11 @@ private:
 		Sound *sound;
 		int playing_pos;
 	};
+	struct CallbackUserData {
+		CallbackUserData(bool* stop, std::list<Audio::PlayingSound>* playingSounds) : stop(stop), playingSounds(playingSounds) {}
+		bool* stop;
+		std::list<Audio::PlayingSound>* playingSounds;
+	};
 	static int callback(const void *inputBuffer,
 		void *outputBuffer,
 		unsigned long framesPerBuffer,
@@ -30,9 +35,10 @@ private:
 		void *userData);
 	PaStream* stream;
 	const size_t framesPerBuffer = 256;
-	std::list<PlayingSound> playingSounds;
+	std::list<Audio::PlayingSound> playingSounds;
 	Sound sound[maxSound];
 	Sound newSound[maxSound];
+	bool stop = false;
 public:
 	void portAudioInit(PaDeviceIndex device);
 	void portAudioExit();

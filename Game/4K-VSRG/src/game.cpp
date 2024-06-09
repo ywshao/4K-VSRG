@@ -3,8 +3,6 @@
 #include <omp.h>
 
 void Game::bmsInit(bool dan) {
-	audio.portAudioExit();
-	audio.portAudioInit(audioDeviceIndex);
 	static std::filesystem::path previousFilePath = {};
 	std::filesystem::path dirPath = dan ? bmsPath / danDirPath : bmsPath / bmsDir[bmsSelect];
 	std::filesystem::path filePath = dan ? dirPath / danFilePath : dirPath / bmsFileDir[bmsSelect][bmsFileSelect];
@@ -95,6 +93,7 @@ void Game::init() {
 	graphic.init(textPath, iniTexture);
 	// Audio init
 	audioDeviceIndex = std::stoi(iniGlobal["Audio"]["device"]);
+	audio.portAudioInit(audioDeviceIndex);
 	// Key map init
 	keyMap[0] = SDL_SCANCODE_X;
 	keyMap[1] = SDL_SCANCODE_C;
@@ -393,7 +392,6 @@ void Game::update(Uint64 currentTime) {
 				chart.clear();
 				chartVisible.clear();
 				judgeKey.clear();
-				audio.portAudioExit();
 				audio.stopSound();
 				break;
 			}
@@ -403,7 +401,7 @@ void Game::update(Uint64 currentTime) {
 		chartVisible.update(&audio, &chart, chartOffset, rate != 100);
 		errorMeter.update(currentTime);
 		// Test
-		score.hp = 100;
+		//score.hp = 100;
 		//
 
 		if ((!chartVisible.count() && chartVisible.finished()) || score.hp <= 0) { // Chart end or hp == 0
@@ -502,7 +500,6 @@ void Game::update(Uint64 currentTime) {
 				chart.clear();
 				chartVisible.clear();
 				judgeKey.clear();
-				audio.portAudioExit();
 				audio.stopSound();
 				score.clearSeg();
 				if (gameState == GameState::Result) {
@@ -532,7 +529,7 @@ void Game::update(Uint64 currentTime) {
 					}
 					else {
 						gameState = GameState::SelectDan;
-						score.clearDan();
+						//score.clearDan();
 					}
 				}
 			}

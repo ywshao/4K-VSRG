@@ -18,7 +18,7 @@
     <ClCompile Include="src\main.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
-    <ClCompile Include="src\audioTest.cpp">
+    <ClCompile Include="src\audio.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
     <ClCompile Include="src\game.cpp">
@@ -47,7 +47,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\audioTest.h">
+    <ClInclude Include="include\audio.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="include\game.h">
